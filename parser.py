@@ -15,17 +15,11 @@ def check_if_line_is_first_part(line):
 
     return False
 
-def check_if_line_is_second_part(line):
-    if re.match("^0 L0", line):
-        return True
-
-    return False
-
 
 def procces_line(line):
     line = line.replace("\n", "")
 
-    matches = re.match("^\<\d\>.* (\/.*) MIDX.*L1-TAPE:(\d*:\d*).*\/\/(.*)", line)
+    matches = re.match("^\<\d\>.* (\/.*) MIDX.*L1-TAPE:(\d*:\d*).*\/(\/.*)", line)
 
     file_name = matches.group(1)
 
@@ -62,7 +56,7 @@ if __name__ == "__main__":
         for line in infile:
             if check_if_line_is_first_part(line):
                 full_line = line
-            if full_line is not None and check_if_line_is_second_part(line):
+            if full_line is not None and not check_if_line_is_first_part(line):
                 full_line = "{}{}".format(full_line, line)
                 procces_line(full_line)
                 count = count + 1
