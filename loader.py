@@ -7,7 +7,7 @@ def process_chunck(chunck_list):
 
     for tar in chunck_list:
         print(base64.b64decode(tar))
-        
+
     print("\n")
 
 if __name__ == "__main__":
@@ -18,10 +18,11 @@ if __name__ == "__main__":
     tar_list = [f for f in listdir(folder)]
 
     chunck_list = []
+    total_tars = len(tar_list)
     for index, tar in enumerate(tar_list, start=1):
 
         chunck_list.append(tar)
-        if index % chunck_size == 0:
+        if index % chunck_size == 0 or index == total_tars:
             process_chunck(chunck_list)
             chunck_list = []
 
