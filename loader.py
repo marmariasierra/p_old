@@ -13,18 +13,25 @@ def process_chunck(chunck_list):
 if __name__ == "__main__":
 
     folder = sys.argv[1]
-    chunck_size = int(sys.argv[2])
+    offset = int(sys.argv[2])
+    chunk = int(sys.argv[3])
 
-    tar_list = [f for f in listdir(folder)]
 
-    chunck_list = []
-    total_tars = len(tar_list)
-    for index, tar in enumerate(tar_list, start=1):
+    tape_list = [f for f in listdir(folder)]
+    tape_list.sort()
 
-        chunck_list.append(tar)
-        if index % chunck_size == 0 or index == total_tars:
-            process_chunck(chunck_list)
-            chunck_list = []
+    tape_list = tape_list[offset:offset+chunk]
+
+    print(tape_list)
+    #
+    # chunck_list = []
+    # total_tars = len(tar_list)
+    # for index, tar in enumerate(tar_list, start=1):
+    #
+    #     chunck_list.append(tar)
+    #     if index % chunck_size == 0 or index == total_tars:
+    #         process_chunck(chunck_list)
+    #         chunck_list = []
 
 
 
