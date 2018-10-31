@@ -30,7 +30,8 @@ class Parser:
 
     TAPE_FOLDER = "tapes"
     count_tape = 0
-    count_agg = 0
+    count_agg =0
+    count_aggfiles = 0
     count_non = 0
     count_lines = 0
     start_time = datetime.now()
@@ -53,24 +54,37 @@ class Parser:
         if match:
             file_name = (match.group(1))
             tape_number = (match.group(2))
-
+            tapes_list= "tapes_list"
             path = self.TAPE_FOLDER + "/" + tape_number + "/"
             if not os.path.exists(path):
                 os.makedirs(path)
+                with open(tapes_list, "a") as f:
+                    f.write(tape_number + "\n")
                 self.count_tape = self.count_tape + 1
 
             # for aggregates, one file per aggregate with a list of all the files in that aggregate
             if match1:
                 AGG_name = base64.b64encode(match.group(3))
+                if not os.path.exists(path + AGG_name):
+                    AGG_list = "AGG_list"
+                    with open(AGG_list, "a") as f:
+                        f.write(match.group(3) + "\n")
+                    self.count_aggfiles = self.count_aggfiles + 1
+
                 with open(path + AGG_name, "a") as f:
                     f.write(file_name + "\n")
                 self.count_agg = self.count_agg + 1
 
+
             # for non aggregates, all the files under the tape_name_NON directory
             elif match2:
+                NON_list = "NON_list"
+                with open(NON_list, "a") as f:
+                    f.write(file_name + "\n")
                 with open(path + "NON", "a") as f:
                     f.write(file_name + "\n")
                 self.count_non = self.count_non + 1
+
 
 
     def update_console(self):
@@ -78,9 +92,9 @@ class Parser:
         sys.stdout.flush()
 
     def print_output(self):
-        logger.info("Total lines checked: {0}, Total tapes parsed: {1}, Total aggregates parsed: {2}, "
-                    "Total non_aggregates parsed: {3}, Total elapsed time: {4} "
-                    .format(self.count_lines, self.count_tape, self.count_agg, self.count_non, datetime.now()-self.start_time ))
+        logger.info("Total lines checked: {0} \nTotal tapes parsed: {1}. Total aggregates parsed: {2}. Total files in aggregates: {3}. "
+                    "Total non_aggregates parsed: {4}. Total elapsed time: {5} "
+                    .format(self.count_lines, self.count_tape, self.count_agg, self.count_aggfiles, self.count_non, datetime.now()-self.start_time ))
 
 
 if __name__ == "__main__":
