@@ -4,19 +4,14 @@ import os
 import base64
 import logging
 from datetime import datetime
-from logging.handlers import TimedRotatingFileHandler
-
-
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-path = datetime.now().strftime('logfile_%d%m%Y.log')
+logger.setLevel(logging.INFO)
 
 formatter = logging.Formatter(fmt='%(asctime)s %(levelname)s %(message)s',
                               datefmt='%Y-%m-%d %H:%M:%S')
 
-file_handler = TimedRotatingFileHandler(path, when="midnight", interval=1, backupCount=1)
+file_handler = logging.FileHandler("parser.log")
 file_handler.setFormatter(formatter)
 
 screen_handler = logging.StreamHandler()
@@ -36,14 +31,12 @@ class Parser:
     count_lines = 0
     start_time = datetime.now()
 
-
     def process_line(self, line):
         self.count_lines = self.count_lines + 1
         line = line.replace("\n", "")
 
         match1 = re.match("<\d>.H\s.+\s(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/AGG\..+)", line)
         match2 = re.match("<\d>.H\s.+\s(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/NON\..+)", line)
-        #match3 = re.match("^\<\d\>.* (\/.*) MIDX.*L1-TAPE:(\d*:\d*).*\/(\/.*)", line)
 
         match = None
         if match1:
@@ -66,8 +59,8 @@ class Parser:
             if match1:
                 AGG_name = base64.b64encode(match.group(3))
                 if not os.path.exists(path + AGG_name):
-                    AGG_list = "AGG_list"
-                    with open(AGG_list, "a") as f:
+                    agg_list = "AGG_list"
+                    with open(agg_list, "a") as f:
                         f.write(match.group(3) + "\n")
                     self.count_aggfiles = self.count_aggfiles + 1
 
@@ -75,11 +68,10 @@ class Parser:
                     f.write(file_name + "\n")
                 self.count_agg = self.count_agg + 1
 
-
             # for non aggregates, all the files under the tape_name_NON directory
             elif match2:
-                NON_list = "NON_list"
-                with open(NON_list, "a") as f:
+                non_list = "NON_list"
+                with open(non_list, "a") as f:
                     f.write(file_name + "\n")
                 with open(path + "NON", "a") as f:
                     f.write(file_name + "\n")
@@ -108,4 +100,5 @@ if __name__ == "__main__":
             parser.update_console()
 
     print("\n")
+
     parser.print_output()
