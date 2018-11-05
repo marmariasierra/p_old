@@ -4,7 +4,7 @@ import os
 import base64
 import logging
 from datetime import datetime
-import gzip
+#import gzip
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -42,8 +42,8 @@ class Parser:
 
         #match1 = re.match("<\d>.H\s.+\s(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/AGG\..+)", line)
         #match2 = re.match("<\d>.H\s.+\s(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/NON\..+)", line)
-        match1 = re.match("(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/AGG\..+)", line)
-        match2 = re.match("(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/NON\..+)", line)
+        match1 = re.match("(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/AGG\.\S+)", line)
+        match2 = re.match("(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/NON\.\S+)", line)
 
         match = None
         if match1:
@@ -97,8 +97,8 @@ class Parser:
             .format(self.count_lines, self.count_tape, self.count_agg, self.count_aggfiles, self.count_non,
                     datetime.now() - self.start_time))
 
-    def order_list(self):
-        os.system('sort lists/tapes_list > lists/tapes_list_sorted')
+#    def order_list(self):
+#        os.system('sort lists/tapes_list > lists/tapes_list_sorted')
 
 
 if __name__ == "__main__":
@@ -122,4 +122,4 @@ if __name__ == "__main__":
 
     print("\n")
     parser.print_output()
-    parser.order_list()
+    #parser.order_list()
