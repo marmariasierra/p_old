@@ -2,7 +2,7 @@ import base64
 import sys
 import os
 from os import listdir
-
+from itertools import islice
 
 #def process_chunck(chunck_list):
 
@@ -23,25 +23,22 @@ if __name__ == "__main__":
 
     #tape_list = tape_list_sorted[offset:offset+chunck]
 
-    with open("tapes_list_sorted", "r") as f:
-        for line in f:
-            path = folder + "/" + line
-            agg_list = []
-            agg_list = os.popen('ls ' + path).read().split()
-            for a in agg_list:
-                complete_path = folder + "/" + str(line).strip() + "/" + a
-                cmd = 'ghi_stage -f ' + complete_path + ' &'
-                print(cmd)
+    # with open("tapes_list_sorted", "r") as f:
+    #     for line in f:
+    #         path = folder + "/" + line
+    #         agg_list = []
+    #         agg_list = os.popen('ls ' + path).read().split()
+    #         for a in agg_list:
+    #             complete_path = folder + "/" + str(line).strip() + "/" + a
+    #             cmd = 'ghi_stage -f ' + complete_path + ' &'
+    #             print(cmd)
 
 #use f.readline() --> number of lines to read??
 #use f.seeK(number of line) then f.read()
 
-#from itertools import islice
-
-# print the 100th line
-#with open('the_file') as lines:
-#    for line in islice(lines, 99, 100):
-#        print line
+    with open("tapes_list_sorted", "r") as f:
+        next_line = list(islice(f, 2, 3))
+        print(next_line)
 
 #for n,line in enumerate(open("file")):
 #    if n+1 in [26,30]: # or n in [25,29]

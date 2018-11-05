@@ -4,6 +4,7 @@ import os
 import base64
 import logging
 from datetime import datetime
+import gzip
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -23,6 +24,7 @@ logger.addHandler(screen_handler)
 
 class Parser:
     TAPE_FOLDER = "tapes"
+    LIST_FOLDER = "lists"
     count_tape = 0
     count_agg = 0
     count_aggfiles = 0
@@ -30,12 +32,18 @@ class Parser:
     count_lines = 0
     start_time = datetime.now()
 
+    path_lists = LIST_FOLDER + "/"
+    os.makedirs(path_lists)
+
+
     def process_line(self, line):
         self.count_lines = self.count_lines + 1
         line = line.replace("\n", "")
 
-        match1 = re.match("<\d>.H\s.+\s(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/AGG\..+)", line)
-        match2 = re.match("<\d>.H\s.+\s(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/NON\..+)", line)
+        #match1 = re.match("<\d>.H\s.+\s(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/AGG\..+)", line)
+        #match2 = re.match("<\d>.H\s.+\s(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/NON\..+)", line)
+        match1 = re.match("(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/AGG\..+)", line)
+        match2 = re.match("(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/NON\..+)", line)
 
         match = None
         if match1:
@@ -46,7 +54,8 @@ class Parser:
         if match:
             file_name = (match.group(1))
             tape_number = (match.group(2))
-            tapes_list = "tapes_list"
+
+            tapes_list = self.LIST_FOLDER + "/tapes_list"
             path = self.TAPE_FOLDER + "/" + tape_number + "/"
             if not os.path.exists(path):
                 os.makedirs(path)
@@ -58,7 +67,7 @@ class Parser:
             if match1:
                 AGG_name = base64.b64encode(match.group(3))
                 if not os.path.exists(path + AGG_name):
-                    agg_list = "AGG_list"
+                    agg_list = self.LIST_FOLDER + "/AGG_list"
                     with open(agg_list, "a") as f:
                         f.write(match.group(3) + "\n")
                     self.count_aggfiles = self.count_aggfiles + 1
@@ -69,7 +78,7 @@ class Parser:
 
             # for non aggregates, all the files under the tape_name_NON directory
             elif match2:
-                non_list = "NON_list"
+                non_list = self.LIST_FOLDER + "/NON_list"
                 with open(non_list, "a") as f:
                     f.write(file_name + "\n")
                 with open(path + "NON", "a") as f:
@@ -91,11 +100,16 @@ class Parser:
 
 if __name__ == "__main__":
 
+    #gzfile = sys.argv[1]
     filename = sys.argv[1]
     parser = Parser()
 
+    #os.system('zcat ' + gzfile + ' | grep "^... H  -" > p_old_files.txt')
+
+    #with gzip.open(filename) as infile:
     with open(filename) as infile:
         for index, line in enumerate(infile):
+        #for line in infile:
             parser.process_line(line)
 
             if index % 1000 == 0:
