@@ -19,7 +19,7 @@ if __name__ == "__main__":
     offset = int(sys.argv[2])
     chunck = int(sys.argv[3])
 
-    os.system('sort tapes_list > tapes_list_sorted')
+    #os.system('sort tapes_list > tapes_list_sorted')
 
     #tape_list = tape_list_sorted[offset:offset+chunck]
 

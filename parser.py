@@ -97,6 +97,9 @@ class Parser:
             .format(self.count_lines, self.count_tape, self.count_agg, self.count_aggfiles, self.count_non,
                     datetime.now() - self.start_time))
 
+    def order_list(self):
+        os.system('sort lists/tapes_list > lists/tapes_list_sorted')
+
 
 if __name__ == "__main__":
 
@@ -112,10 +115,11 @@ if __name__ == "__main__":
         #for line in infile:
             parser.process_line(line)
 
-            if index % 1000 == 0:
+            if index % 20000 == 0:
                 parser.update_console()
 
         parser.update_console()
 
     print("\n")
     parser.print_output()
+    parser.order_list()
