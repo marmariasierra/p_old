@@ -22,10 +22,9 @@ logger.addHandler(screen_handler)
 
 
 class Parser:
-
     TAPE_FOLDER = "tapes"
     count_tape = 0
-    count_agg =0
+    count_agg = 0
     count_aggfiles = 0
     count_non = 0
     count_lines = 0
@@ -47,7 +46,7 @@ class Parser:
         if match:
             file_name = (match.group(1))
             tape_number = (match.group(2))
-            tapes_list= "tapes_list"
+            tapes_list = "tapes_list"
             path = self.TAPE_FOLDER + "/" + tape_number + "/"
             if not os.path.exists(path):
                 os.makedirs(path)
@@ -77,16 +76,17 @@ class Parser:
                     f.write(file_name + "\n")
                 self.count_non = self.count_non + 1
 
-
-
     def update_console(self):
-        sys.stdout.write("\rTotal lines checked: {0}, time elapased: {1}".format(self.count_lines, datetime.now()-self.start_time))
+        sys.stdout.write(
+            "\rTotal lines checked: {0}, time elapased: {1}".format(self.count_lines, datetime.now() - self.start_time))
         sys.stdout.flush()
 
     def print_output(self):
-        logger.info("Total lines checked: {0} \nTotal tapes parsed: {1}. Total aggregates parsed: {2}. Total files in aggregates: {3}. "
-                    "Total non_aggregates parsed: {4}. Total elapsed time: {5} "
-                    .format(self.count_lines, self.count_tape, self.count_agg, self.count_aggfiles, self.count_non, datetime.now()-self.start_time ))
+        logger.info(
+            "Total lines checked: {0} \nTotal tapes parsed: {1}. Total aggregates parsed: {2}. Total files in aggregates: {3}. "
+            "Total non_aggregates parsed: {4}. Total elapsed time: {5} "
+            .format(self.count_lines, self.count_tape, self.count_agg, self.count_aggfiles, self.count_non,
+                    datetime.now() - self.start_time))
 
 
 if __name__ == "__main__":
@@ -95,10 +95,13 @@ if __name__ == "__main__":
     parser = Parser()
 
     with open(filename) as infile:
-        for line in infile:
+        for index, line in enumerate(infile):
             parser.process_line(line)
-            parser.update_console()
+
+            if index % 1000 == 0:
+                parser.update_console()
+
+        parser.update_console()
 
     print("\n")
-
     parser.print_output()
