@@ -25,13 +25,12 @@ logger.addHandler(screen_handler)
 class Parser:
     TAPE_FOLDER = "tapes"
     LIST_FOLDER = "lists"
-    count_tape = 0
-    count_agg = 0
-    count_aggfiles = 0
-    count_non = 0
     count_lines = 0
+    count_files = 0
     start_time = datetime.now()
-
+    tapes_set = set()
+    agg_set = set()
+    non_set = set()
     path_lists = LIST_FOLDER + "/"
     os.makedirs(path_lists)
 
@@ -40,10 +39,10 @@ class Parser:
         self.count_lines = self.count_lines + 1
         line = line.replace("\n", "")
 
-        #match1 = re.match("<\d>.H\s.+\s(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/AGG\..+)", line)
-        #match2 = re.match("<\d>.H\s.+\s(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/NON\..+)", line)
-        match1 = re.match("(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/AGG\.\S+)", line)
-        match2 = re.match("(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/NON\.\S+)", line)
+        match1 = re.match("<\d>.H\s.+\s(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/AGG\..+)", line)
+        match2 = re.match("<\d>.H\s.+\s(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/NON\..+)", line)
+        #match1 = re.match("(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/AGG\.\S+)", line)
+        #match2 = re.match("(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/NON\.\S+)", line)
 
         match = None
         if match1:
@@ -52,38 +51,32 @@ class Parser:
             match = match2
 
         if match:
-            file_name = (match.group(1))
-            tape_number = (match.group(2))
+            file_name = match.group(1)
+            tape_number = match.group(2)
+            agg_name = match.group(3)
 
-            tapes_list = self.LIST_FOLDER + "/tapes_list"
+
             path = self.TAPE_FOLDER + "/" + tape_number + "/"
             if not os.path.exists(path):
                 os.makedirs(path)
-                with open(tapes_list, "a") as f:
-                    f.write(tape_number + "\n")
-                self.count_tape = self.count_tape + 1
+                self.tapes_set.add(tape_number)
+
 
             # for aggregates, one file per aggregate with a list of all the files in that aggregate
             if match1:
-                AGG_name = base64.b64encode(match.group(3))
-                if not os.path.exists(path + AGG_name):
-                    agg_list = self.LIST_FOLDER + "/AGG_list"
-                    with open(agg_list, "a") as f:
-                        f.write(match.group(3) + "\n")
-                    self.count_aggfiles = self.count_aggfiles + 1
+                self.agg_set.add(agg_name)
 
+                AGG_name = base64.b64encode(agg_name)
                 with open(path + AGG_name, "a") as f:
                     f.write(file_name + "\n")
-                self.count_agg = self.count_agg + 1
+                    self.count_files = self.count_files + 1
 
             # for non aggregates, all the files under the tape_name_NON directory
             elif match2:
-                non_list = self.LIST_FOLDER + "/NON_list"
-                with open(non_list, "a") as f:
-                    f.write(file_name + "\n")
+                self.non_set.add(file_name)
+
                 with open(path + "NON", "a") as f:
                     f.write(file_name + "\n")
-                self.count_non = self.count_non + 1
 
     def update_console(self):
         sys.stdout.write(
@@ -94,12 +87,18 @@ class Parser:
         logger.info(
             "Total lines checked: {0} \nTotal tapes parsed: {1}. Total aggregates parsed: {2}. Total files in aggregates: {3}. "
             "Total non_aggregates parsed: {4}. Total elapsed time: {5} "
-            .format(self.count_lines, self.count_tape, self.count_agg, self.count_aggfiles, self.count_non,
+            .format(self.count_lines, len(self.tapes_set), len(self.agg_set), self.count_files, len(self.non_set),
                     datetime.now() - self.start_time))
 
-#    def order_list(self):
-#        os.system('sort lists/tapes_list > lists/tapes_list_sorted')
+    def create_lists(self):
+        with open(self.LIST_FOLDER + "/tapes_list", "a") as f:
+            f.write("\n".join(sorted(self.tapes_set)))
 
+        with open(self.LIST_FOLDER + "/AGG_list", "a") as f:
+            f.write("\n".join(self.agg_set))
+
+        with open(self.LIST_FOLDER + "/NON_list", "a") as f:
+            f.write("\n".join(self.non_set))
 
 if __name__ == "__main__":
 
@@ -107,19 +106,14 @@ if __name__ == "__main__":
     filename = sys.argv[1]
     parser = Parser()
 
-    #os.system('zcat ' + gzfile + ' | grep "^... H  -" > p_old_files.txt')
-
-    #with gzip.open(filename) as infile:
     with open(filename) as infile:
         for index, line in enumerate(infile):
         #for line in infile:
             parser.process_line(line)
 
-            if index % 20000 == 0:
+            if index % 1000 == 0:
                 parser.update_console()
-
-        parser.update_console()
 
     print("\n")
     parser.print_output()
-    #parser.order_list()
+    parser.create_lists()
