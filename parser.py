@@ -77,16 +77,21 @@ class Parser:
     def write_dict_to_files(self):
         logger.info("writing dict to files")
 
-        for tape_number, agg_list in self.output_dict.iteritems():
+        tapes_number_list = self.output_dict.keys()
+        for tape_number in tapes_number_list:
 
             tape_path = self.TAPE_FOLDER + "/" + tape_number
             if not os.path.exists(tape_path):
                 os.makedirs(tape_path)
 
+            agg_list = self.output_dict.get(tape_number)
+
             for encoded_agg_name, filename_list in agg_list.iteritems():
 
                 with open(tape_path + "/" + encoded_agg_name, "a") as f:
                     f.write("\n".join(filename_list))
+
+            self.output_dict.pop(tape_number)
 
 
 
@@ -132,6 +137,8 @@ if __name__ == "__main__":
                 parser.update_console()
 
     print("\n")
-    parser.write_dict_to_files()
+
     parser.print_output()
     parser.create_lists()
+
+    parser.write_dict_to_files()
