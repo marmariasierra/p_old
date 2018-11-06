@@ -23,7 +23,7 @@ logger.addHandler(screen_handler)
 
 
 class Parser:
-    TAPE_FOLDER = "tapes"
+    TAPE_FOLDER = "tapes_2"
     LIST_FOLDER = "lists"
     count_lines = 0
     count_files = 0
@@ -32,7 +32,7 @@ class Parser:
     agg_set = set()
     non_set = set()
     path_lists = LIST_FOLDER + "/"
-    os.makedirs(path_lists)
+    output_dict = {}
 
 
     def process_line(self, line):
@@ -51,48 +51,65 @@ class Parser:
             match = match2
 
         if match:
+            self.count_files = self.count_files + 1
             file_name = match.group(1)
             tape_number = match.group(2)
             agg_name = match.group(3)
 
-
-            path = self.TAPE_FOLDER + "/" + tape_number + "/"
-            if not os.path.exists(path):
-                os.makedirs(path)
-                self.tapes_set.add(tape_number)
-
-
-            # for aggregates, one file per aggregate with a list of all the files in that aggregate
+            file_agg_name = ''
             if match1:
                 self.agg_set.add(agg_name)
-
-                AGG_name = base64.b64encode(agg_name)
-                with open(path + AGG_name, "a") as f:
-                    f.write(file_name + "\n")
-                    self.count_files = self.count_files + 1
-
-            # for non aggregates, all the files under the tape_name_NON directory
+                file_agg_name = base64.b64encode(agg_name)
             elif match2:
                 self.non_set.add(file_name)
+                file_agg_name = 'NON'
 
-                with open(path + "NON", "a") as f:
-                    f.write(file_name + "\n")
+            if not tape_number in self.output_dict.keys():
+                self.output_dict.update({tape_number: {}})
+
+            if file_agg_name in self.output_dict.get(tape_number).keys():
+                self.output_dict[tape_number][file_agg_name].append(file_name)
+
+            else:
+                self.output_dict[tape_number].update({file_agg_name: [file_name]})
+
+
+    def write_dict_to_files(self):
+        logger.info("writing dict to files")
+
+        for tape_number, agg_list in self.output_dict.iteritems():
+
+            tape_path = self.TAPE_FOLDER + "/" + tape_number
+            if not os.path.exists(tape_path):
+                os.makedirs(tape_path)
+
+            for encoded_agg_name, filename_list in agg_list.iteritems():
+
+                with open(tape_path + "/" + encoded_agg_name, "a") as f:
+                    f.write("\n".join(filename_list))
+
+
+
 
     def update_console(self):
         sys.stdout.write(
-            "\rTotal lines checked: {0}, time elapased: {1}".format(self.count_lines, datetime.now() - self.start_time))
+            "\rTotal lines checked: {0}, time elapsed: {1}".format(self.count_lines, datetime.now() - self.start_time))
         sys.stdout.flush()
 
     def print_output(self):
         logger.info(
             "Total lines checked: {0} \nTotal tapes parsed: {1}. Total aggregates parsed: {2}. Total files in aggregates: {3}. "
             "Total non_aggregates parsed: {4}. Total elapsed time: {5} "
-            .format(self.count_lines, len(self.tapes_set), len(self.agg_set), self.count_files, len(self.non_set),
+            .format(self.count_lines, len(self.output_dict.keys()), len(self.agg_set), self.count_files, len(self.non_set),
                     datetime.now() - self.start_time))
 
     def create_lists(self):
+
+        if not os.path.exists(self.path_lists):
+            os.makedirs(self.path_lists)
+
         with open(self.LIST_FOLDER + "/tapes_list", "a") as f:
-            f.write("\n".join(sorted(self.tapes_set)))
+            f.write("\n".join(sorted(self.output_dict.keys())))
 
         with open(self.LIST_FOLDER + "/AGG_list", "a") as f:
             f.write("\n".join(self.agg_set))
@@ -115,5 +132,6 @@ if __name__ == "__main__":
                 parser.update_console()
 
     print("\n")
+    parser.write_dict_to_files()
     parser.print_output()
     parser.create_lists()
