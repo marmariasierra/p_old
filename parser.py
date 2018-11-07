@@ -51,7 +51,6 @@ class Parser:
             match = match2
 
         if match:
-            self.count_files = self.count_files + 1
             file_name = match.group(1)
             tape_number = match.group(2)
             agg_name = match.group(3)
@@ -60,6 +59,8 @@ class Parser:
             if match1:
                 self.agg_set.add(agg_name)
                 file_agg_name = base64.b64encode(agg_name)
+                self.count_files = self.count_files + 1
+
             elif match2:
                 self.non_set.add(file_name)
                 file_agg_name = 'NON'
@@ -124,16 +125,14 @@ class Parser:
 
 if __name__ == "__main__":
 
-    #gzfile = sys.argv[1]
     filename = sys.argv[1]
     parser = Parser()
 
     with open(filename) as infile:
         for index, line in enumerate(infile):
-        #for line in infile:
             parser.process_line(line)
 
-            if index % 1000 == 0:
+            if index % 20000 == 0:
                 parser.update_console()
 
     print("\n")
