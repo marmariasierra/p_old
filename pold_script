@@ -1,0 +1,26 @@
+#!/bin/bash
+TS=`date "+%FT%T"`
+for tape in $(cat tapes_list_test.txt)
+do
+        if [ ! -f $tape.txt ]
+        then
+                lsvol -i1 -v $tape &> output.txt
+                sed -n 's,.*/ghi_managed/hpss_ghi,/ghi_managed/hpss_ghi,p'| egrep 'AGG|NON' output.txt  > $tape.txt
+                echo "$TS lsvol in $tape created" >> logfile.log
+                head -5 $tape.txt > $tape.head.txt
+                echo "$TS copying to disk from $tape "
+                /usr/local/hpss/bin/hpssstagelist $tape.head.txt &> $tape.staged.txt
+                echo "$TS $tape copied to disk" >> logfile.log
+                echo "connecting to r1ghi01"
+                ssh -t r1ghi01  "cd /ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02 ; touch $tape.backup_done"
+                echo "$TS files in $tape staged in ghi" >> logfile.log
+                echo "checking status of staging in r1ghi01"
+                ssh -t r1ghi01  "cd /ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02 ; touch $tape.check_done"
+                while [ ! -f $tape.backup_done ]
+                do
+                        echo "waiting for the backup of $tape"
+                        sleep 30
+                done
+                echo "$TS $tape backup done " >> logfile.log
+        fi
+done
