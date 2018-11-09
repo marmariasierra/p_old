@@ -4,7 +4,6 @@ import os
 import base64
 import logging
 from datetime import datetime
-#import gzip
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -23,17 +22,15 @@ logger.addHandler(screen_handler)
 
 
 class Parser:
-    TAPE_FOLDER = "tapes_2"
+    TAPE_FOLDER = "tapes"
     LIST_FOLDER = "lists"
     count_lines = 0
     count_files = 0
     start_time = datetime.now()
-    tapes_set = set()
     agg_set = set()
     non_set = set()
     path_lists = LIST_FOLDER + "/"
     output_dict = {}
-
 
     def process_line(self, line):
         self.count_lines = self.count_lines + 1
@@ -41,8 +38,8 @@ class Parser:
 
         match1 = re.match("<\d>.H\s.+\s(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/AGG\..+)", line)
         match2 = re.match("<\d>.H\s.+\s(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/NON\..+)", line)
-        #match1 = re.match("(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/AGG\.\S+)", line)
-        #match2 = re.match("(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/NON\.\S+)", line)
+        # match1 = re.match("(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/AGG\.\S+)", line)
+        # match2 = re.match("(/.+)\sMIDX:\d.+L1-TAPE:(\d+).+(//.+/NON\.\S+)", line)
 
         match = None
         if match1:
@@ -51,7 +48,6 @@ class Parser:
             match = match2
 
         if match:
-            self.count_files = self.count_files + 1
             file_name = match.group(1)
             tape_number = match.group(2)
             agg_name = match.group(3)
@@ -60,6 +56,8 @@ class Parser:
             if match1:
                 self.agg_set.add(agg_name)
                 file_agg_name = base64.b64encode(agg_name)
+                self.count_files = self.count_files + 1
+
             elif match2:
                 self.non_set.add(file_name)
                 file_agg_name = 'NON'
@@ -73,23 +71,23 @@ class Parser:
             else:
                 self.output_dict[tape_number].update({file_agg_name: [file_name]})
 
-
     def write_dict_to_files(self):
         logger.info("writing dict to files")
 
-        for tape_number, agg_list in self.output_dict.iteritems():
+        tapes_number_list = self.output_dict.keys()
+        for tape_number in tapes_number_list:
 
             tape_path = self.TAPE_FOLDER + "/" + tape_number
             if not os.path.exists(tape_path):
                 os.makedirs(tape_path)
 
-            for encoded_agg_name, filename_list in agg_list.iteritems():
+            agg_list = self.output_dict.get(tape_number)
 
+            for encoded_agg_name, filename_list in agg_list.iteritems():
                 with open(tape_path + "/" + encoded_agg_name, "a") as f:
                     f.write("\n".join(filename_list))
 
-
-
+            self.output_dict.pop(tape_number)
 
     def update_console(self):
         sys.stdout.write(
@@ -100,8 +98,9 @@ class Parser:
         logger.info(
             "Total lines checked: {0} \nTotal tapes parsed: {1}. Total aggregates parsed: {2}. Total files in aggregates: {3}. "
             "Total non_aggregates parsed: {4}. Total elapsed time: {5} "
-            .format(self.count_lines, len(self.output_dict.keys()), len(self.agg_set), self.count_files, len(self.non_set),
-                    datetime.now() - self.start_time))
+                .format(self.count_lines, len(self.output_dict.keys()), len(self.agg_set), self.count_files,
+                        len(self.non_set),
+                        datetime.now() - self.start_time))
 
     def create_lists(self):
 
@@ -117,21 +116,22 @@ class Parser:
         with open(self.LIST_FOLDER + "/NON_list", "a") as f:
             f.write("\n".join(self.non_set))
 
+
 if __name__ == "__main__":
 
-    #gzfile = sys.argv[1]
     filename = sys.argv[1]
     parser = Parser()
 
     with open(filename) as infile:
         for index, line in enumerate(infile):
-        #for line in infile:
             parser.process_line(line)
 
-            if index % 1000 == 0:
+            if index % 20000 == 0:
                 parser.update_console()
 
     print("\n")
-    parser.write_dict_to_files()
+
     parser.print_output()
     parser.create_lists()
+
+    parser.write_dict_to_files()
