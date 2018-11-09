@@ -12,15 +12,17 @@ do
                 /usr/local/hpss/bin/hpssstagelist $tape.head.txt &> $tape.staged.txt
                 echo "$TS $tape copied to disk" >> logfile.log
                 echo "connecting to r1ghi01"
-                ssh -t r1ghi01  "cd /ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02 ; touch $tape.backup_done"
+                ssh -t r1ghi01  "/ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/cleanFiles/ghistage.sh $tape"
                 echo "$TS files in $tape staged in ghi" >> logfile.log
                 echo "checking status of staging in r1ghi01"
-                ssh -t r1ghi01  "cd /ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02 ; touch $tape.check_done"
-                while [ ! -f $tape.backup_done ]
-                do
-                        echo "waiting for the backup of $tape"
-                        sleep 30
-                done
+                ssh -t r1ghi01  "/ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/cleanFiles/ghicheck.sh $tape"
+                echo "checking status of backup"
+                ssh -t r1ghi01  " while [ ! -f $tape.backup_done ]; do echo "waiting for the backup of $tape; sleep 30; done"
+                #while [ ! -f $tape.backup_done ]
+                #do
+                #        echo "waiting for the backup of $tape"
+                #        sleep 30
+                #done
                 echo "$TS $tape backup done " >> logfile.log
         fi
 done

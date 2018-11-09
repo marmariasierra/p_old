@@ -1,14 +1,23 @@
 #!/bin/bash
 TS=`date "+%FT%T"`
 tape=$1
-while [ ! -f $tape.tostage.txt ]
+dir=/ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/cleanFiles/tapes
+cd $dir
+counter=1
+for agg in $(cat $tape.tostage.txt)
 do
-    ls $tape >  $tape.tostage.txt
+        cpath=$dir/$tape/$agg
+        cd $dir/output_files
+        echo "$PWD"
+        ghi_ls -f $cpath | grep "^H" | sed -e 's,.*/ghi/p_old/MPIN,/ghi/p_old/MPIN,' > nonB_files.txt
+        if [ -s nonB_files.txt ]
+        then
+            echo "staging remaining files"
+            ghi_stage -f nonB_files.txt &> $dir/output_files/$tage.ghi.txt &
+            echo "all files in $tape staged" > $tape\_staged.txt
+       else
+            echo "all files in $tape staged" > $tape\_staged.txt
+            echo "all files in agg $counter of $tape"
+        fi
+        ((counter++))
 done
-while read agg
-do ghi_ls -f $agg | grep "^H" > nonB_files.txt
-#create nonBfile.txt that can be sent to ghi_stage
-if [(wc nonB_files.txt !=0]
-then ghi_stage -f nonB_files.txt
-fi
-echo "$TS all files checked" >> ghicheck.log
