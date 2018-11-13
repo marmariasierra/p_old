@@ -25,7 +25,7 @@ do
                 if [ -s $dirout/$tape/nonB_files.$counter.txt ]
                 then
                         echo "staging remaining files in $counter"
-                        ghi_stage -f $dirout/$tape/nonB_files.$counter.txt >> $dirout/$tage.ghi.txt 2> $dirout/$tape.outputghi2.txt &
+                        ghi_stage -f $dirout/$tape/nonB_files.$counter.txt >> $dirout/$tape.outputghi2.txt 2> $dirout/$tape.outputghi2.txt &
                         echo "all files in $tape staged" > $dirout/$tape\_staged.txt
                 else
                         echo "files in $agg already staged"
@@ -35,7 +35,5 @@ do
 done
 wait
 echo "all files in $tape staged"
-
-
-
-
+#done
+#echo "all files staged without while"
