@@ -6,18 +6,23 @@ do
         then
                 lsvol -i1 -v $tape &> output.txt
                 sed -n 's,.*/ghi_managed/hpss_ghi,/ghi_managed/hpss_ghi,p'| egrep 'AGG|NON' output.txt  > $tape.txt
-                echo "$TS lsvol in $tape created" >> logfile.log
-                echo "$TS copying to disk from $tape"
+                echo -e "`date "+%FT%T"` lsvol in $tape created\r " >> logfile.log
+                echo -e "`date "+%FT%T"` copying to disk from $tape\r"
                 rm -f output.txt
                 /usr/local/hpss/bin/hpssstagelist $tape.txt &> $tape.staged.txt
-                echo "$TS $tape copied to disk" >> logfile.log
-                echo "connecting to r1ghi01"
+                echo -e "`date "+%FT%T"` $tape copied to disk\r " >> logfile.log
+                echo -e "connecting to r1ghi01"
                 ssh -t r1ghi01  "/ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/cleanFiles/ghistage.sh $tape"
-                echo "$TS files in $tape staged in ghi" >> logfile.log
-                echo "checking status of staging in r1ghi01"
+                echo -e "`date "+%FT%T"` files in $tape staged in ghi\r " >> logfile.log
+                echo -e "checking status of staging in r1ghi01"
                 ssh -t r1ghi01  "/ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/cleanFiles/ghicheck.sh $tape"
-                echo "checking status of backup"
-                #ssh -t r1ghi01  "while [ ! -f $tape.backup_done ]; do echo "waiting for the backup of $tape"; sleep 30; done"
-                #echo "$TS $tape backup done " >> logfile.log
+                echo -e "doing backup"
+                ssh -t r1ghi01  "/ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/cleanFiles/tsmbackup.sh $tape"
+                #echo -e "checking status of backup"
+                #ssh -t r1ghi01  "while [ ! -f $tape.backup_done ]; do echo -e "waiting for the backup of $tape"; sleep 30; done"
+                #echo -e "`date "+%FT%T"` $tape backup done \r" >> logfile.log
+                echo -e "checking status of backup & purge files"
+                ssh -t r1ghi01 "/ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/cleanFiles/checkpurge.sh $tape"
+                echo -e "`date "+%FT%T"` files in $tape purged \r" >> logfile.log
         fi
 done

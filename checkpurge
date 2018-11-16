@@ -1,0 +1,17 @@
+#!/bin/bash
+
+tape=$1
+dirout=/ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/cleanFiles/output_files
+
+while true
+do
+    smbclient '\\mpincopy\R1GHI$' r1ghi01 -U r1ghi -c "dir $tape.txt"  > $dirout/$tape.smb.txt 2>$dirout/smboutput.txt
+    filefound=`grep -o available $dirout/$tape.smb.txt | wc -l`
+    if [ $filefound -eq 1 ]
+    then
+        #/ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/PurgeFiles/purge_some_files.sh $dirout/$tape.tobackup.txt
+        echo "$dirout/$tape.tobackup.txt files purged"
+        break
+    fi
+sleep 30
+done

@@ -1,0 +1,40 @@
+#!/bin/bash
+#TS=`date "+%FT%T"`
+dirout=/cygdrive/z/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/cleanFiles/output_files
+dirbc="/cygdrive/z/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/cleanFiles/output_files/tobackup"
+wdirbc="Z:\\MPCDF\\HPSS\\GHI1\\FilesystemList\\2018\\02\\cleanFiles\\output_files"
+tsmdir="/cygdrive/c/Program\ Files/Tivoli/TSM/baclient"
+echo "$wdirbc"
+cd "/cygdrive/c/Program Files/Tivoli/TSM/baclient"
+while true
+do
+        backupfiles=`ls $dirbc`
+        nfiles=`ls $dirbc | wc -l`
+        echo "$backupfiles"
+        if [ $nfiles -gt 0 ]
+        then
+                for file in $backupfiles
+                do
+                        tape=`echo ${file:0:8}`
+                        echo $tape
+                        bcfile=$wdirbc\\$file
+                        #dsmc incremental -filelist=\"$bcfile\" > /cygdrive/c/smar/$tape\_log
+                        /cygdrive/c/Program\ Files/Tivoli/TSM/baclient/dsmc incremental -filelist=\"$bcfile\" > /cygdrive/c/smar/$tape\_log.txt
+                        echo "bcfile $bcfile"
+                        echo "dsmc query backup -filelist=\"$bcfile\" >/cygdrive/e/smar/check_files/$tape.check.txt"
+                        /cygdrive/c/Program\ Files/Tivoli/TSM/baclient/dsmc query backup -filelist=\"$bcfile\" > /cygdrive/e/smar/check\_files/$tape\_check.txt
+                        logfiles=`grep "Normal Files" /cygdrive/c/smar/$tape_log.txt | wc `
+                        checkfiles=`grep DEFAULT /cygdrive/e/smar/check_files/$tape_check.txt | wc`
+                        ofiles=`wc dirbc/$tape.tobackup.txt`
+                        if [logfiles == checkfiles ==ofiles]
+                        touch /cygdrive/c/R1GHI/$tape.txt
+                        echo -e "`date "+%FT%T"` backup done for $tape\r" >> /cygdrive/e/smar/check_files/poldbackup_log
+                done
+        fi
+        echo "waiting"
+        sleep 30
+done
+
+
+
+

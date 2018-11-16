@@ -8,3 +8,4 @@ do
     echo "waiting for the backup of $tape" >> ghistage.log
     sleep 30
 done
+
