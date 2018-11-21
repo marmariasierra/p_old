@@ -1,24 +1,18 @@
 #!/bin/bash
 
-#TS=`date "+%FT%T"`
 tape=$1
 dirtapes=/ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/cleanFiles/tapes
 dirout=/ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/cleanFiles/output_files
 
-for agg in $(cat $dirout/$tape.tostage.txt)
-do
-    sed '$a\' $dirtapes/$tape/$agg | sed -e 's,^/ghi,Z:,' -e 's,/,\\,g' -e 's,^,",' -e 's,$,",' >> $dirout/$tape.tobackup.txt
-    #cp $dirout/$tape.tobackup.txt $dirout/backup/tobackup.txt
-    touch $dirout/backup/$tape.tobackup.txt
-done
-echo "`date "+%FT%T"` $tape.tobackup.txt created\n"
+if [ ! -f $dirout/tobackup/$tape.tobackup.txt ]
+then
+        for agg in $(cat $dirout/$tape.tostage.txt)
+        do
+         sed '$a\' $dirtapes/$tape/$agg | sed -e 's,^/ghi,Z:,' -e 's,/,\\,g' -e 's,^,",' -e 's,$,",' >> $dirout/tobackup/$tape.tobackup.txt
+        done
 echo -e "`date "+%FT%T"` $tape.tobackup.txt created\n"
-
-
-for agg in $(cat $dirout/$tape.tostage.txt)
-do
-    sed '$a\' $dirtapes/$tape/$agg >> $dirout/$tape.tobackup.txt
-    sed -e 's,^/ghi,Z:,' -e 's,/,\\,g' -e 's,^,",' -e 's,$,",' >> $dirout/tobackup/$tape.tobackup.txt
-done
-echo "`date "+%FT%T"` $tape.tobackup.txt created\n"
-echo -e "`date "+%FT%T"` $tape.tobackup.txt created\n"
+echo -e "`date "+%FT%T"` $tape.tobackup.txt created" >> $dirout/ghistage.log
+else
+echo -e "`date "+%FT%T"` $tape.tobackup.txt exists\n"
+echo -e "`date "+%FT%T"` $tape.tobackup.txt exists" >> $dirout/ghistage.log
+fi

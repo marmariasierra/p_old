@@ -1,8 +1,0 @@
-#!/bin/bash
-wdirbc="Z:\\MPCDF\\HPSS\\GHI1\\FilesystemList\\2018\\02\\cleanFiles\\output_files"
-tsmdir="/cygdrive/c/Program Files/Tivoli/TSM/baclient"
-echo "wdirbc $wdirbc"
-echo "tsmdir $tsmdir"
-bcfile="Z:\\MPCDF\\HPSS\\GHI1\\FilesystemList\\2018\\02\\AGG\\w_backfile2.txt"
-tape=000
-$tsmdir/dsmc query backup -filelist="$bcfile" > /cygdrive/e/smar/check_files/$tape\_check

@@ -1,17 +1,32 @@
 #!/bin/bash
 
-tape=$1
 dirout=/ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/cleanFiles/output_files
 
 while true
 do
-    smbclient '\\mpincopy\R1GHI$' r1ghi01 -U r1ghi -c "dir $tape.txt"  > $dirout/$tape.smb.txt 2>$dirout/smboutput.txt
-    filefound=`grep -o available $dirout/$tape.smb.txt | wc -l`
-    if [ $filefound -eq 1 ]
-    then
-        #/ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/PurgeFiles/purge_some_files.sh $dirout/$tape.tobackup.txt
-        echo "$dirout/$tape.tobackup.txt files purged"
-        break
-    fi
+    smbclient '\\mpincopy\R1GHI$' r1ghi01 -U r1ghi -c "dir *txt" &> $dirout/smboutput.txt
+    sed '1d;$d' $dirout/smboutput.txt | awk '{print$1}' > $dirout/smb.txt
+    for file in $(cat $dirout/smb.txt)
+        do
+            tape=`echo ${file:0:8}`
+            if [ ! -f $dirout/smb/$tape ]
+            then
+                filefound=`grep -o $tape.txt $dirout/smb.txt | wc -l`
+                errfound=`grep -o $tape.error.txt $dirout/smb.txt | wc -l`
+                if [ $filefound -eq 1 ]
+                then
+                    #/ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/PurgeFiles/purge_some_files.sh $dirout/$tape.tobackup.txt &> $dirout/purge.log
+                    echo "$dirout/$tape.tobackup.txt files purged"
+                    echo -e "`date "+%FT%T"` $dirout/$tape.tobackup.txt files purged" >> $dirout/ghistage.log
+                    echo "files purged" > $dirout/smb/$tape
+                elif [ $errfound -eq 1 ]
+                then
+                    echo "error in $tape backup"
+                    echo -e "`date "+%FT%T"` $dirout/$tape.tobackup.txt files purged" >> $dirout/ghistage.log
+                    echo "error in $tape backup" > $dirout/smb/$tape
+                    echo "error in $tape backup" >> $dirout/problematic/backup.error
+                fi
+            fi
+     done
 sleep 30
 done

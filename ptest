@@ -1,0 +1,72 @@
+#!/bin/bash
+
+dirout=/cygdrive/z/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/cleanFiles/output_files
+dirbc="/cygdrive/z/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/cleanFiles/output_files/tobackup"
+wdirbc="Z:\\MPCDF\\HPSS\\GHI1\\FilesystemLists\2018\\02\\cleanFiles\\output_files\\tobackup"
+tsmdir="/cygdrive/c/Program\ Files/Tivoli/TSM/baclient"
+
+while true
+do
+        backupfiles=`ls $dirbc`
+        nfiles=`ls $dirbc | wc -l`
+        echo "$backupfiles"
+        if [ $nfiles -gt 0 ]
+        then
+                for file in $backupfiles
+                do
+                        tape=`echo ${file:0:8}`
+                        echo $tape
+                        logfiles=`grep "Normal File" /cygdrive/c/Users/smar/$tape\_log.txt | wc -l`
+                        echo "log $logfiles"
+                        checkfiles=`grep DEFAULT /cygdrive/e/smar/check_files/$tape\_check.txt | wc -l`
+                        echo "check $checkfiles"
+                        ofiles=`wc -l < $dirbc/$tape.tobackup.txt`
+                        echo "ofiles $ofiles"
+                        echo "bck $dirbc/$tape.tobackup.txt"
+                        if [ $logfiles -eq $checkfiles ] && [ $checkfiles -eq $ofiles ]
+                        then
+                            echo "son iguales"
+                        else
+                            echo "diferentes"
+                        fi
+                done
+        fi
+        echo "waiting"
+        sleep 30
+done
+
+
+
+#!/bin/bash
+
+tape=$1
+dirout=/ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/cleanFiles/output_files
+
+while true
+do
+    smbclient '\\mpincopy\R1GHI$' r1ghi01 -U r1ghi -c "dir *txt" &> $dirout/smboutput.txt
+    sed '1d;$d' $dirout/smboutput.txt | awk '{print$1}' > $dirout/smb.txt
+    for file in $(cat $dirout/smb.txt)
+        do
+            tape=`echo ${file:0:8}`
+            if [ ! -f $dirout/smb/$tape ]
+            then
+                filefound=`grep -o $tape.txt $dirout/smb.txt | wc -l`
+                errfound=`grep -o $tape.error.txt $dirout/smb.txt | wc -l`
+                if [ $filefound -eq 1 ]
+                then
+                    #/ghi/MPCDF/HPSS/GHI1/FilesystemLists/2018/02/PurgeFiles/purge_some_files.sh $dirout/$tape.tobackup.txt 2> $dirout/purge.log
+                    echo "$dirout/$tape.tobackup.txt files purged"
+                    echo -e "`date "+%FT%T"` $dirout/$tape.tobackup.txt files purged" >> $dirout/ghistage.log
+                    echo "files purged" >> $dirout/smb/$tape
+                elif [ $errfound -eq 1 ]
+                then
+                    echo "error in $tape backup"
+                    echo -e "`date "+%FT%T"` $dirout/$tape.tobackup.txt files purged" >> $dirout/ghistage.log
+                    echo "error in $tape backup" >> $dirout/smb/$tape
+                    echo "error in $tape backup" >> $dirout/problematic/backup.error
+                fi
+            fi
+     done
+sleep 30
+done
