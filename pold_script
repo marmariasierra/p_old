@@ -5,7 +5,7 @@ do
         if [ ! -f $tape.hpss.staged.txt ]
         then
                 lsvol -i1 -v $tape &> output.txt
-                sed -n 's,.*/ghi_managed/hpss_ghi,/ghi_managed/hpss_ghi,p'| egrep 'AGG|NON' output.txt  > $tape.txt
+                sed -n 's,.*/ghi_managed/hpss_ghi,/ghi_managed/hpss_ghi,p' output.txt | egrep 'AGG|NON'  > $tape.txt
                 echo -e "`date "+%FT%T"` lsvol in $tape created\r " >> logfile.log
                 echo -e "`date "+%FT%T"` copying to disk from $tape\r"
                 rm -f output.txt
